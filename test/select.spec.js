@@ -1878,6 +1878,7 @@ describe('ui-select tests', function () {
         if (attrs.limit !== undefined) { attrsHtml += ' limit="' + attrs.limit + '"'; }
         if (attrs.onSelect !== undefined) { attrsHtml += ' on-select="' + attrs.onSelect + '"'; }
         if (attrs.removeSelected !== undefined) { attrsHtml += ' remove-selected="' + attrs.removeSelected + '"'; }
+        if (attrs.firstItemActive === undefined) { attrs.firstItemActive = true; }
       }
 
       return compileTemplate(

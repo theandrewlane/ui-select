@@ -2,7 +2,6 @@ var fs = require('fs');
 var del = require('del');
 var gulp = require('gulp');
 var streamqueue = require('streamqueue');
-var karma = require('karma').server;
 var $ = require('gulp-load-plugins')();
 var runSequence = require('run-sequence');
 var conventionalRecommendedBump = require('conventional-recommended-bump');
@@ -11,21 +10,16 @@ var titleCase = require('title-case');
 var config = {
   pkg : JSON.parse(fs.readFileSync('./package.json')),
   banner:
-      '/*!\n' +
-      ' * <%= pkg.name %>\n' +
-      ' * <%= pkg.homepage %>\n' +
-      ' * Version: <%= pkg.version %> - <%= timestamp %>\n' +
-      ' * License: <%= pkg.license %>\n' +
-      ' */\n\n\n'
+  '/*!\n' +
+  ' * <%= pkg.name %>\n' +
+  ' * <%= pkg.homepage %>\n' +
+  ' * Version: <%= pkg.version %> - <%= timestamp %>\n' +
+  ' * License: <%= pkg.license %>\n' +
+  ' */\n\n\n'
 };
 
-gulp.task('default', ['build','test']);
+gulp.task('default', ['build']);
 gulp.task('build', ['scripts', 'styles']);
-gulp.task('test', ['build', 'karma']);
-
-gulp.task('watch', ['build','karma-watch'], function() {
-  gulp.watch(['src/**/*.{js,html}'], ['build']);
-});
 
 gulp.task('clean', function(cb) {
   del(['dist', 'temp'], cb);
@@ -36,10 +30,10 @@ gulp.task('scripts', ['clean'], function() {
   var buildTemplates = function () {
     return gulp.src('src/**/*.html')
       .pipe($.minifyHtml({
-             empty: true,
-             spare: true,
-             quotes: true
-            }))
+        empty: true,
+        spare: true,
+        quotes: true
+      }))
       .pipe($.angularTemplatecache({module: 'ui.select'}));
   };
 
