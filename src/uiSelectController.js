@@ -384,7 +384,7 @@ uis.controller('uiSelectCtrl',
   ctrl.select = function(item, skipFocusser, $event) {
     if (hasEmptyOption) {
       // handle empty/blank item selection
-      if (item.value.length === 0 && item.description.length === 0) {
+      if (!isNil(item) && item.value.length === 0) {
         item = null;
         ctrl.activeIndex = 0;
         ctrl.selected = null;

@@ -1,7 +1,7 @@
 /*!
  * ui-select
  * http://github.com/angular-ui/ui-select
- * Version: 0.19.8 - 2018-05-31T18:20:24.370Z
+ * Version: 0.19.8 - 2018-05-31T21:07:21.590Z
  * License: MIT
  */
 
@@ -664,7 +664,7 @@ uis.controller('uiSelectCtrl',
   ctrl.select = function(item, skipFocusser, $event) {
     if (hasEmptyOption) {
       // handle empty/blank item selection
-      if (item.value.length === 0 && item.description.length === 0) {
+      if (!isNil(item) && item.value.length === 0) {
         item = null;
         ctrl.activeIndex = 0;
         ctrl.selected = null;
