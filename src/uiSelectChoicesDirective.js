@@ -59,6 +59,8 @@ uis.directive('uiSelectChoices',
         $select.onHighlightCallback = attrs.onHighlight;
         $select.minimumInputLength = parseInt(attrs.minimumInputLength) || 0;
         $select.dropdownPosition = attrs.position ? attrs.position.toLowerCase() : uiSelectConfig.dropdownPosition;
+        // use scope.$eval here to get a boolean
+        $select.shouldShowEmptyOption = attrs.shouldShowEmptyOption ? scope.$eval(attrs.shouldShowEmptyOption): uiSelectConfig.shouldShowEmptyOption;
 
         scope.$watch('$select.search', function(newValue) {
           if(newValue && !$select.open && $select.multiple) $select.activate(false, true);

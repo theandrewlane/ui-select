@@ -11,6 +11,7 @@ uis.controller('uiSelectCtrl',
   var ctrl = this;
 
   var EMPTY_SEARCH = '';
+  var hasEmptyOption = false;
 
   ctrl.placeholder = uiSelectConfig.placeholder;
   ctrl.searchEnabled = uiSelectConfig.searchEnabled;
@@ -23,6 +24,7 @@ uis.controller('uiSelectCtrl',
   ctrl.spinnerClass = uiSelectConfig.spinnerClass;
   ctrl.removeSelected = uiSelectConfig.removeSelected; //If selected item(s) should be removed from dropdown list
   ctrl.closeOnSelect = true; //Initialized inside uiSelect directive link function
+  ctrl.shouldShowEmptyOption = false;
   ctrl.skipFocusser = false; //Set to true to avoid returning focus to ctrl when item is selected
   ctrl.search = EMPTY_SEARCH;
 
@@ -111,14 +113,15 @@ uis.controller('uiSelectCtrl',
   // When the user clicks on ui-select, displays the dropdown list
   ctrl.activate = function(initSearchValue, avoidReset) {
     if (!ctrl.disabled  && !ctrl.open) {
-      if(!avoidReset) _resetSearchInput();
+      if (ctrl.shouldShowEmptyOption) _addEmptyOption();
+      if (!avoidReset) _resetSearchInput();
 
       $scope.$broadcast('uis:activate');
       ctrl.open = true;
       ctrl.activeIndex = ctrl.activeIndex >= ctrl.items.length ? 0 : ctrl.activeIndex;
       // ensure that the index is set to zero for tagging variants
       // that where first option is auto-selected
-      if ( ctrl.activeIndex === -1 && ctrl.taggingLabel !== false ) {
+      if (ctrl.activeIndex === -1 && ctrl.taggingLabel !== false ) {
         ctrl.activeIndex = 0;
       }
 
@@ -379,6 +382,14 @@ uis.controller('uiSelectCtrl',
 
   // When the user selects an item with ENTER or clicks the dropdown
   ctrl.select = function(item, skipFocusser, $event) {
+    if (hasEmptyOption) {
+      // handle empty/blank item selection
+      if (item.value.length === 0 && item.description.length === 0) {
+        item = null;
+        ctrl.activeIndex = 0;
+        ctrl.selected = null;
+      }
+    }
     if (isNil(item) || !_isItemDisabled(item)) {
 
       if ( ! ctrl.items && ! ctrl.search && ! ctrl.tagging.isActivated) return;
@@ -409,7 +420,7 @@ uis.controller('uiSelectCtrl',
             if ( ctrl.activeIndex === 0 ) {
               // ctrl.tagging pushes items to ctrl.items, so we only have empty val
               // for `item` if it is a detected duplicate
-              if ( item === undefined ) return;
+              if ( item === undefined || item === null ) return;
 
               // create new item on the fly if we don't already have one;
               // use tagging function if we have one
@@ -753,4 +764,12 @@ uis.controller('uiSelectCtrl',
     if (!open)
       $element.find('input').removeAttr('aria-activedescendant');
   });
+
+  function _addEmptyOption(){
+    if(!hasEmptyOption) {
+      // Add empty Item to the beginning of the items list
+      ctrl.items.unshift({value: '', description: ''});
+      hasEmptyOption = true;
+    }
+  }
 }]);

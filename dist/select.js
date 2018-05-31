@@ -1,7 +1,7 @@
 /*!
  * ui-select
  * http://github.com/angular-ui/ui-select
- * Version: 0.19.7 - 2017-04-15T14:28:36.649Z
+ * Version: 0.19.8 - 2018-05-31T18:20:24.370Z
  * License: MIT
  */
 
@@ -121,6 +121,7 @@ var uis = angular.module('ui.select', [])
     return latestId++;
   },
   appendToBody: false,
+  shouldShowEmptyOption: false,
   spinnerEnabled: false,
   spinnerClass: 'glyphicon glyphicon-refresh ui-select-spin',
   backspaceReset: true
@@ -180,31 +181,6 @@ var uis = angular.module('ui.select', [])
       height: boundingClientRect.height || element.prop('offsetHeight'),
       top: boundingClientRect.top + ($window.pageYOffset || $document[0].documentElement.scrollTop),
       left: boundingClientRect.left + ($window.pageXOffset || $document[0].documentElement.scrollLeft)
-    };
-  };
-}]);
-
-/**
- * Debounces functions
- *
- * Taken from UI Bootstrap $$debounce source code
- * See https://github.com/angular-ui/bootstrap/blob/master/src/debounce/debounce.js
- *
- */
-uis.factory('$$uisDebounce', ['$timeout', function($timeout) {
-  return function(callback, debounceTime) {
-    var timeoutPromise;
-
-    return function() {
-      var self = this;
-      var args = Array.prototype.slice.call(arguments);
-      if (timeoutPromise) {
-        $timeout.cancel(timeoutPromise);
-      }
-
-      timeoutPromise = $timeout(function() {
-        callback.apply(self, args);
-      }, debounceTime);
     };
   };
 }]);
@@ -270,6 +246,8 @@ uis.directive('uiSelectChoices',
         $select.onHighlightCallback = attrs.onHighlight;
         $select.minimumInputLength = parseInt(attrs.minimumInputLength) || 0;
         $select.dropdownPosition = attrs.position ? attrs.position.toLowerCase() : uiSelectConfig.dropdownPosition;
+        // use scope.$eval here to get a boolean
+        $select.shouldShowEmptyOption = attrs.shouldShowEmptyOption ? scope.$eval(attrs.shouldShowEmptyOption): uiSelectConfig.shouldShowEmptyOption;
 
         scope.$watch('$select.search', function(newValue) {
           if(newValue && !$select.open && $select.multiple) $select.activate(false, true);
@@ -313,6 +291,7 @@ uis.controller('uiSelectCtrl',
   var ctrl = this;
 
   var EMPTY_SEARCH = '';
+  var hasEmptyOption = false;
 
   ctrl.placeholder = uiSelectConfig.placeholder;
   ctrl.searchEnabled = uiSelectConfig.searchEnabled;
@@ -325,6 +304,7 @@ uis.controller('uiSelectCtrl',
   ctrl.spinnerClass = uiSelectConfig.spinnerClass;
   ctrl.removeSelected = uiSelectConfig.removeSelected; //If selected item(s) should be removed from dropdown list
   ctrl.closeOnSelect = true; //Initialized inside uiSelect directive link function
+  ctrl.shouldShowEmptyOption = false;
   ctrl.skipFocusser = false; //Set to true to avoid returning focus to ctrl when item is selected
   ctrl.search = EMPTY_SEARCH;
 
@@ -413,14 +393,15 @@ uis.controller('uiSelectCtrl',
   // When the user clicks on ui-select, displays the dropdown list
   ctrl.activate = function(initSearchValue, avoidReset) {
     if (!ctrl.disabled  && !ctrl.open) {
-      if(!avoidReset) _resetSearchInput();
+      if (ctrl.shouldShowEmptyOption) _addEmptyOption();
+      if (!avoidReset) _resetSearchInput();
 
       $scope.$broadcast('uis:activate');
       ctrl.open = true;
       ctrl.activeIndex = ctrl.activeIndex >= ctrl.items.length ? 0 : ctrl.activeIndex;
       // ensure that the index is set to zero for tagging variants
       // that where first option is auto-selected
-      if ( ctrl.activeIndex === -1 && ctrl.taggingLabel !== false ) {
+      if (ctrl.activeIndex === -1 && ctrl.taggingLabel !== false ) {
         ctrl.activeIndex = 0;
       }
 
@@ -681,6 +662,14 @@ uis.controller('uiSelectCtrl',
 
   // When the user selects an item with ENTER or clicks the dropdown
   ctrl.select = function(item, skipFocusser, $event) {
+    if (hasEmptyOption) {
+      // handle empty/blank item selection
+      if (item.value.length === 0 && item.description.length === 0) {
+        item = null;
+        ctrl.activeIndex = 0;
+        ctrl.selected = null;
+      }
+    }
     if (isNil(item) || !_isItemDisabled(item)) {
 
       if ( ! ctrl.items && ! ctrl.search && ! ctrl.tagging.isActivated) return;
@@ -711,7 +700,7 @@ uis.controller('uiSelectCtrl',
             if ( ctrl.activeIndex === 0 ) {
               // ctrl.tagging pushes items to ctrl.items, so we only have empty val
               // for `item` if it is a detected duplicate
-              if ( item === undefined ) return;
+              if ( item === undefined || item === null ) return;
 
               // create new item on the fly if we don't already have one;
               // use tagging function if we have one
@@ -1055,6 +1044,14 @@ uis.controller('uiSelectCtrl',
     if (!open)
       $element.find('input').removeAttr('aria-activedescendant');
   });
+
+  function _addEmptyOption(){
+    if(!hasEmptyOption) {
+      // Add empty Item to the beginning of the items list
+      ctrl.items.unshift({value: '', description: ''});
+      hasEmptyOption = true;
+    }
+  }
 }]);
 
 uis.directive('uiSelect',
@@ -2299,6 +2296,31 @@ uis.directive('uiSelectSort', ['$timeout', 'uiSelectConfig', 'uiSelectMinErr', f
         element.off('drop', dropHandler);
       });
     }
+  };
+}]);
+
+/**
+ * Debounces functions
+ *
+ * Taken from UI Bootstrap $$debounce source code
+ * See https://github.com/angular-ui/bootstrap/blob/master/src/debounce/debounce.js
+ *
+ */
+uis.factory('$$uisDebounce', ['$timeout', function($timeout) {
+  return function(callback, debounceTime) {
+    var timeoutPromise;
+
+    return function() {
+      var self = this;
+      var args = Array.prototype.slice.call(arguments);
+      if (timeoutPromise) {
+        $timeout.cancel(timeoutPromise);
+      }
+
+      timeoutPromise = $timeout(function() {
+        callback.apply(self, args);
+      }, debounceTime);
+    };
   };
 }]);
 
