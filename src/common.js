@@ -111,6 +111,7 @@ var uis = angular.module('ui.select', [])
     return latestId++;
   },
   appendToBody: false,
+  clearSelectionType: 'button',
   spinnerEnabled: false,
   spinnerClass: 'glyphicon glyphicon-refresh ui-select-spin',
   backspaceReset: true
