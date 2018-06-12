@@ -24,7 +24,6 @@ uis.controller('uiSelectCtrl',
   ctrl.spinnerClass = uiSelectConfig.spinnerClass;
   ctrl.removeSelected = uiSelectConfig.removeSelected; //If selected item(s) should be removed from dropdown list
   ctrl.closeOnSelect = true; //Initialized inside uiSelect directive link function
-  ctrl.shouldShowEmptyOption = false;
   ctrl.skipFocusser = false; //Set to true to avoid returning focus to ctrl when item is selected
   ctrl.search = EMPTY_SEARCH;
 
@@ -113,7 +112,7 @@ uis.controller('uiSelectCtrl',
   // When the user clicks on ui-select, displays the dropdown list
   ctrl.activate = function(initSearchValue, avoidReset) {
     if (!ctrl.disabled  && !ctrl.open) {
-      if (ctrl.shouldShowEmptyOption) _addEmptyOption();
+      if (ctrl.allowBlankValueClear) _addEmptyOption();
       if (!avoidReset) _resetSearchInput();
 
       $scope.$broadcast('uis:activate');
