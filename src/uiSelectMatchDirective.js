@@ -22,7 +22,7 @@ uis.directive('uiSelectMatch', ['uiSelectConfig', function(uiSelectConfig) {
       });
 
       function setAllowClearButton(allow) {
-        allow = (allow.toLowerCase()) === 'true';
+        allow = (allow && allow === 'true');
         if ($select.clearSelectionType === 'button') {
           $select.allowClear = allow;
           $select.allowBlankValueClear = false;
