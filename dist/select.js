@@ -1,7 +1,7 @@
 /*!
  * ui-select
  * http://github.com/angular-ui/ui-select
- * Version: 0.19.8 - 2018-06-13T05:48:38.083Z
+ * Version: 0.19.8 - 2018-06-13T23:29:25.957Z
  * License: MIT
  */
 
@@ -516,6 +516,7 @@ uis.controller('uiSelectCtrl',
     }
 
     ctrl.refreshItems = function (data){
+      hasEmptyOption = false;
       data = data || ctrl.parserResult.source($scope);
       var selectedItems = ctrl.selected;
       //TODO should implement for single mode removeSelected
@@ -662,7 +663,7 @@ uis.controller('uiSelectCtrl',
   ctrl.select = function(item, skipFocusser, $event) {
     if (hasEmptyOption) {
       // handle empty/blank item selection
-      if (!isNil(item) && item.value.length === 0) {
+      if (!isNil(item) && item.value === '') {
         item = null;
         ctrl.activeIndex = 0;
         ctrl.selected = null;
@@ -1027,6 +1028,7 @@ uis.controller('uiSelectCtrl',
   angular.element($window).bind('resize', onResize);
 
   $scope.$on('$destroy', function() {
+    hasEmptyOption = false;
     ctrl.searchInput.off('keyup keydown tagged blur paste');
     angular.element($window).off('resize', onResize);
   });
@@ -1044,17 +1046,37 @@ uis.controller('uiSelectCtrl',
   });
 
   function _addEmptyOption(){
-    if(!hasEmptyOption) {
-      // Add empty Item to the beginning of the items list
-      ctrl.items.unshift({value: '', description: ''});
+    if(!hasEmptyOption && ctrl.items && ctrl.items.length) {
+      var elm = ctrl.items[0];
+      var emptyClone = '';
+      if (typeof elm === 'object'){
+        // ES5 equivalent of a spread w/dynamic prop names :(
+        emptyClone = Object.assign.apply(Object,
+          Object.keys(elm).map(function(key) {
+            var elms = {};
+            elms[key] = '';
+            return elms;
+          })
+        );
+        // If the select doesn't already contain a blank, add one
+        if(elm !== emptyClone){
+          ctrl.items.unshift(emptyClone);
+          onResize();
+        }
+      } else {
+        // If the select doesn't already contain a blank, add one
+        if(elm.length > 0) {
+          ctrl.items.unshift(emptyClone);
+        }
+      }
       hasEmptyOption = true;
     }
   }
 }]);
 
 uis.directive('uiSelect',
-  ['$document', 'uiSelectConfig', 'uiSelectMinErr', 'uisOffset', '$compile', '$parse', '$timeout',
-  function($document, uiSelectConfig, uiSelectMinErr, uisOffset, $compile, $parse, $timeout) {
+  ['$document', 'uiSelectConfig', 'uiSelectMinErr', 'uisOffset', '$compile', '$parse', '$timeout', '$window',
+  function($document, uiSelectConfig, uiSelectMinErr, uisOffset, $compile, $parse, $timeout, $window) {
 
   return {
     restrict: 'EA',
@@ -1260,11 +1282,17 @@ uis.directive('uiSelect',
           $select.clickTriggeredSelect = false;
         }
 
-        // See Click everywhere but here event http://stackoverflow.com/questions/12931369
-        $document.on('click', onDocumentClick);
+        // See Click everywhere but here. Similar approach to http://stackoverflow.com/questions/12931369
+        // but using the capture phase instead of bubble phase of the event propagation.
+        //
+        // Using the capture phase avoids problems that araise when event.stopPropatagion()
+        // is called before the event reaches the `document`.
+        $window.document.addEventListener('click', onDocumentClick, true);
 
         scope.$on('$destroy', function() {
-          $document.off('click', onDocumentClick);
+          $window.document.removeEventListener('click', onDocumentClick, true);
+          if(dropdown)
+            $select.$animate.off('enter', dropdown);
         });
 
         // Move transcluded elements to their correct position in main template
@@ -1432,7 +1460,7 @@ uis.directive('uiSelect',
         };
 
         var opened = false;
-        
+
         scope.calculateDropdownPos = function() {
           if ($select.open) {
             dropdown = angular.element(element).querySelectorAll('.ui-select-dropdown');

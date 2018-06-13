@@ -237,6 +237,7 @@ uis.controller('uiSelectCtrl',
     }
 
     ctrl.refreshItems = function (data){
+      hasEmptyOption = false;
       data = data || ctrl.parserResult.source($scope);
       var selectedItems = ctrl.selected;
       //TODO should implement for single mode removeSelected
@@ -383,7 +384,7 @@ uis.controller('uiSelectCtrl',
   ctrl.select = function(item, skipFocusser, $event) {
     if (hasEmptyOption) {
       // handle empty/blank item selection
-      if (!isNil(item) && item.value.length === 0) {
+      if (!isNil(item) && item.value === '') {
         item = null;
         ctrl.activeIndex = 0;
         ctrl.selected = null;
@@ -748,6 +749,7 @@ uis.controller('uiSelectCtrl',
   angular.element($window).bind('resize', onResize);
 
   $scope.$on('$destroy', function() {
+    hasEmptyOption = false;
     ctrl.searchInput.off('keyup keydown tagged blur paste');
     angular.element($window).off('resize', onResize);
   });
@@ -765,9 +767,29 @@ uis.controller('uiSelectCtrl',
   });
 
   function _addEmptyOption(){
-    if(!hasEmptyOption) {
-      // Add empty Item to the beginning of the items list
-      ctrl.items.unshift({value: '', description: ''});
+    if(!hasEmptyOption && ctrl.items && ctrl.items.length) {
+      var elm = ctrl.items[0];
+      var emptyClone = '';
+      if (typeof elm === 'object'){
+        // ES5 equivalent of a spread w/dynamic prop names :(
+        emptyClone = Object.assign.apply(Object,
+          Object.keys(elm).map(function(key) {
+            var elms = {};
+            elms[key] = '';
+            return elms;
+          })
+        );
+        // If the select doesn't already contain a blank, add one
+        if(elm !== emptyClone){
+          ctrl.items.unshift(emptyClone);
+          onResize();
+        }
+      } else {
+        // If the select doesn't already contain a blank, add one
+        if(elm.length > 0) {
+          ctrl.items.unshift(emptyClone);
+        }
+      }
       hasEmptyOption = true;
     }
   }
