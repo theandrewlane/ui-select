@@ -1,7 +1,7 @@
 /*!
  * ui-select
  * http://github.com/angular-ui/ui-select
- * Version: 0.19.8 - 2018-06-14T20:45:45.489Z
+ * Version: 0.19.8 - 2018-06-14T23:02:02.881Z
  * License: MIT
  */
 
@@ -1058,11 +1058,11 @@ uis.controller('uiSelectCtrl',
             return elms;
           })
         );
-        // If the select doesn't already contain a blank, add one
-        // Serialize objects to check for equality
-        if (JSON.stringify(elm) !== JSON.stringify(emptyClone)) ctrl.items.unshift(emptyClone);
+        // If the select doesn't already contain a blank value, add one
+        // Strip out any angular-generated property names, then serialize to check for equality
+        if (angular.toJson(elm) !== angular.toJson(emptyClone)) ctrl.items.unshift(emptyClone);
       } else {
-        // If the select doesn't already contain a blank, add one
+        // If the select doesn't already contain a blank value, add one
         if (elm !== emptyClone) ctrl.items.unshift(emptyClone);
       }
       hasEmptyOption = true;

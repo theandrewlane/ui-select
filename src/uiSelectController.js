@@ -779,11 +779,11 @@ uis.controller('uiSelectCtrl',
             return elms;
           })
         );
-        // If the select doesn't already contain a blank, add one
-        // Serialize objects to check for equality
-        if (JSON.stringify(elm) !== JSON.stringify(emptyClone)) ctrl.items.unshift(emptyClone);
+        // If the select doesn't already contain a blank value, add one
+        // Strip out any angular-generated property names, then serialize to check for equality
+        if (angular.toJson(elm) !== angular.toJson(emptyClone)) ctrl.items.unshift(emptyClone);
       } else {
-        // If the select doesn't already contain a blank, add one
+        // If the select doesn't already contain a blank value, add one
         if (elm !== emptyClone) ctrl.items.unshift(emptyClone);
       }
       hasEmptyOption = true;
