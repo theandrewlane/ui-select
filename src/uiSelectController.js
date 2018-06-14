@@ -114,7 +114,6 @@ uis.controller('uiSelectCtrl',
     if (!ctrl.disabled  && !ctrl.open) {
       if (ctrl.allowBlankValueClear) _addEmptyOption();
       if (!avoidReset) _resetSearchInput();
-
       $scope.$broadcast('uis:activate');
       ctrl.open = true;
       ctrl.activeIndex = ctrl.activeIndex >= ctrl.items.length ? 0 : ctrl.activeIndex;
@@ -237,7 +236,6 @@ uis.controller('uiSelectCtrl',
     }
 
     ctrl.refreshItems = function (data){
-      hasEmptyOption = false;
       data = data || ctrl.parserResult.source($scope);
       var selectedItems = ctrl.selected;
       //TODO should implement for single mode removeSelected
@@ -383,15 +381,17 @@ uis.controller('uiSelectCtrl',
   // When the user selects an item with ENTER or clicks the dropdown
   ctrl.select = function(item, skipFocusser, $event) {
     if (hasEmptyOption) {
-      // handle empty/blank item selection
-      if (!isNil(item) && item.value === '') {
+      // Handle empty/blank item selection
+      if (!isNil(item) && !ctrl.search && item === ctrl.items[0]) {
         item = null;
         ctrl.activeIndex = 0;
         ctrl.selected = null;
+        // Remove blank-value when there is nothing currently selected
+        ctrl.items.shift();
+        hasEmptyOption = false;
       }
     }
     if (isNil(item) || !_isItemDisabled(item)) {
-
       if ( ! ctrl.items && ! ctrl.search && ! ctrl.tagging.isActivated) return;
 
       if (!item || !_isItemDisabled(item)) {
@@ -767,7 +767,7 @@ uis.controller('uiSelectCtrl',
   });
 
   function _addEmptyOption(){
-    if(!hasEmptyOption && ctrl.items && ctrl.items.length) {
+    if(!ctrl.isEmpty()) {
       var elm = ctrl.items[0];
       var emptyClone = '';
       if (typeof elm === 'object'){
@@ -780,15 +780,11 @@ uis.controller('uiSelectCtrl',
           })
         );
         // If the select doesn't already contain a blank, add one
-        if(elm !== emptyClone){
-          ctrl.items.unshift(emptyClone);
-          onResize();
-        }
+        // Serialize objects to check for equality
+        if (JSON.stringify(elm) !== JSON.stringify(emptyClone)) ctrl.items.unshift(emptyClone);
       } else {
         // If the select doesn't already contain a blank, add one
-        if(elm.length > 0) {
-          ctrl.items.unshift(emptyClone);
-        }
+        if (elm !== emptyClone) ctrl.items.unshift(emptyClone);
       }
       hasEmptyOption = true;
     }
